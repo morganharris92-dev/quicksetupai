@@ -1,17 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    optimizeCss: true,
-    turbo: {
-      resolveAlias: {
-        "@/components": "./components",
-        "@/lib": "./lib"
-      }
-    }
+    turbo: true,
+    optimizeCss: true
   },
-  images: {
-    // Cloudflare Pages doesn't run Next's default image optimizer
-    unoptimized: true
+  eslint: {
+    // Skip ESLint during "next build" so CI doesn't need eslint packages
+    ignoreDuringBuilds: true
   }
 };
+
 export default nextConfig;
