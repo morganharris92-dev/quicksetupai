@@ -1,0 +1,2 @@
+# quicksetupai
+QuickSetupAI.com
