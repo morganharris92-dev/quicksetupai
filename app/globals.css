@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0F172A;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-mist text-slate-800 antialiased;
+}
+
+.gradient-hero {
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(109,40,217,0.25), transparent),
+              radial-gradient(1000px 500px at 100% 0%, rgba(20,184,166,0.25), transparent);
+}
