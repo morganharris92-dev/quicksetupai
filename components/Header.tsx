@@ -1,40 +1,37 @@
+// components/Header.tsx
 "use client";
-import Image from "next/image";
+
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Header() {
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white shadow-md">
-      <Link href="/" className="flex items-center gap-3">
-        <Image
-          src="/logo.svg" // Your logo in /public
-          alt="QuickSetupAI Logo"
-          width={40}
-          height={40}
-          priority
-        />
-        <span className="text-xl font-bold text-gray-800">QuickSetupAI</span>
-      </Link>
+    <header className="w-full border-b bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link href="/" className="flex items-center gap-3">
+          {/* Works for /public/logo.svg OR /public/logo.png */}
+          <Image
+            src="/logo.png"      // change to "/logo.png" if that’s your file
+            alt="QuickSetupAI"
+            width={32}
+            height={32}
+            priority
+            onError={(e) => {
+              // graceful fallback if the image can’t load for any reason
+              const img = e.currentTarget as HTMLImageElement;
+              img.style.display = "none";
+            }}
+          />
+          <span className="text-lg font-semibold">QuickSetupAI</span>
+        </Link>
 
-      <nav className="flex items-center gap-6">
-        <Link href="#features" className="text-gray-700 hover:text-indigo-600">
-          Features
-        </Link>
-        <Link href="#pricing" className="text-gray-700 hover:text-indigo-600">
-          Pricing
-        </Link>
-        <Link href="#contact" className="text-gray-700 hover:text-indigo-600">
-          Contact
-        </Link>
-        <a
-          href="https://calendly.com/yourlink" // update later when you get Calendly
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-        >
-          Book a Call
-        </a>
-      </nav>
+        {/* right side nav (optional) */}
+        <nav className="flex items-center gap-4">
+          <Link href="#services" className="text-sm hover:underline">Services</Link>
+          <Link href="#pricing" className="text-sm hover:underline">Pricing</Link>
+          <Link href="#contact" className="text-sm hover:underline">Contact</Link>
+        </nav>
+      </div>
     </header>
   );
 }
