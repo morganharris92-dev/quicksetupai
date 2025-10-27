@@ -1,7 +1,7 @@
 // app/page.tsx
 import CTAButton from "@/components/CTAButton";
 import Section from "@/components/Section";
-import ContactForm from "@/components/ContactForm"; // handles submit + success banner
+import ContactForm from "@/components/ContactForm";
 
 export default function Home() {
   return (
@@ -122,20 +122,28 @@ export default function Home() {
       {/* CTA / CONTACT */}
       <Section id="contact" title="Your AI Setup Starts Here" subtitle="Book a free call and see how fast AI can start working for you.">
         <div className="grid md:grid-cols-2 gap-8 items-start">
+          {/* CALENDLY EMBED */}
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
-            {/* Calendly Embed placeholder; swap with your embed when ready */}
-            <div className="aspect-video w-full rounded-xl bg-mist border border-slate-200 flex items-center justify-center text-slate-500">
-              Add Calendly embed here
+            <div className="w-full rounded-xl overflow-hidden border border-slate-200">
+              <div
+                className="calendly-inline-widget"
+                data-url="https://calendly.com/morgan-harris92/30min"
+                style={{ minWidth: "320px", height: "700px" }}
+              ></div>
+              <script
+                type="text/javascript"
+                src="https://assets.calendly.com/assets/external/widget.js"
+                async
+              ></script>
             </div>
             <p className="mt-3 text-sm text-slate-600">Prefer email? contactquicksetupai@gmail.com</p>
           </div>
 
-          {/* Contact form with inline success message */}
+          {/* CONTACT FORM */}
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">Quick Contact</h3>
             <p className="text-sm text-slate-700">Tell us your goal and we’ll reply with a quick plan.</p>
             <ContactForm />
-            {/* Removed duplicate disclaimer here (ContactForm already includes it). */}
           </div>
         </div>
       </Section>
