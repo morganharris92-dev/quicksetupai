@@ -1,170 +1,111 @@
-import CTAButton from "@/components/CTAButton";
+// app/page.tsx
 import Section from "@/components/Section";
 
-export default function Home() {
+export default function Page() {
   return (
-    <main>
-      {/* HERO */}
-      <div className="gradient-hero border-b border-slate-200">
-        <div className="mx-auto max-w-6xl px-6 pt-20 pb-16 md:pt-28 md:pb-24">
-          <p className="text-teal font-semibold mb-4">QuickSetupAI.com</p>
-          <h1 className="text-3xl md:text-6xl font-extrabold text-midnight leading-tight max-w-4xl">
-            Custom AI Systems for Small Businesses — Built Fast, Priced Low, Maintained Long-Term
-          </h1>
-          <p className="mt-6 text-slate-700 max-w-2xl">
-            Stop wasting time on prompts and plugins. We’ll set up your entire AI system—tailored to your business—in days, not months.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <CTAButton href="#contact">Book a Free AI Setup Call</CTAButton>
-            <CTAButton href="#pricing" variant="secondary">See Pricing</CTAButton>
-          </div>
-        </div>
-      </div>
-
-      {/* WHAT WE DO (SERVICES) */}
+    <>
+      {/* --- SERVICES --- */}
       <Section
         id="services"
-        title="We Build AI Systems That Actually Make You Money"
-        subtitle="Custom GPTs, workflow automations, and long-term maintenance so you never have to touch the tech."
+        title="Our Services"
+        subtitle="We help you audit, design, build, and maintain smart AI systems that save time and drive results."
+      >
+        <ul className="list-disc ml-6 space-y-2 text-slate-700">
+          <li><strong>Audit:</strong> We map goals, workflows, tools, and bottlenecks.</li>
+          <li><strong>Blueprint:</strong> We create a clear plan for GPTs, automations, and success metrics.</li>
+          <li><strong>Build:</strong> We set up GPTs, routes, prompts, and integrations.</li>
+          <li><strong>Maintain:</strong> We provide ongoing optimization, new use-cases, and faster results.</li>
+        </ul>
+      </Section>
+
+      {/* --- PRICING --- */}
+      <Section
+        id="pricing"
+        title="Pricing"
+        subtitle="Start free and scale your automation as your business grows."
       >
         <div className="grid md:grid-cols-3 gap-6">
-          <div className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h3 className="font-semibold text-lg">Custom GPT Development</h3>
-            <p className="mt-2 text-sm text-slate-700">Branded GPTs trained on your FAQs, tone, and SOPs to triage emails, leads, and support.</p>
+          <div className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition">
+            <h3 className="text-xl font-semibold text-midnight mb-2">Starter</h3>
+            <p className="text-slate-600 mb-3">Perfect for testing ideas.</p>
+            <p className="font-bold text-2xl text-midnight mb-4">$0</p>
+            <ul className="text-slate-600 space-y-1 text-sm">
+              <li>✔ Limited GPT setup</li>
+              <li>✔ Email support</li>
+            </ul>
           </div>
-          <div className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h3 className="font-semibold text-lg">Workflow Automation</h3>
-            <p className="mt-2 text-sm text-slate-700">AI flows that summarize calls, draft proposals, schedule follow-ups, and sync with your tools.</p>
+          <div className="rounded-2xl border border-violet p-6 shadow-md bg-violet/5 hover:bg-violet/10 transition">
+            <h3 className="text-xl font-semibold text-violet mb-2">Pro</h3>
+            <p className="text-slate-600 mb-3">For small teams automating daily work.</p>
+            <p className="font-bold text-2xl text-violet mb-4">$49/mo</p>
+            <ul className="text-slate-600 space-y-1 text-sm">
+              <li>✔ 5 automations</li>
+              <li>✔ Priority email support</li>
+              <li>✔ Strategy session</li>
+            </ul>
           </div>
-          <div className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h3 className="font-semibold text-lg">AI Maintenance & Updates</h3>
-            <p className="mt-2 text-sm text-slate-700">Monthly tune-ups so your stack stays fast, accurate, and compatible with new model updates.</p>
-          </div>
-        </div>
-        <div className="mt-8"><CTAButton href="#process">How Our Process Works</CTAButton></div>
-      </Section>
-
-      {/* VALUE */}
-      <Section title="Fast. Affordable. Ongoing." subtitle="Other agencies disappear after setup. We stay and keep improving.">
-        <div className="grid md:grid-cols-3 gap-6">
-          <CardStat title="Speed" value="Live in 5 business days" />
-          <CardStat title="Low Cost" value="Setup from $499" />
-          <CardStat title="Long-Term Support" value="Proactive monthly improvements" />
-        </div>
-      </Section>
-
-      {/* PROCESS */}
-      <Section id="process" title="Audit → Blueprint → Build → Maintain">
-        <ol className="grid md:grid-cols-4 gap-6 list-decimal list-inside">
-          <li className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h4 className="font-semibold">Audit</h4>
-            <p className="text-sm mt-2 text-slate-700">We map goals, workflows, tools, and bottlenecks.</p>
-          </li>
-          <li className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h4 className="font-semibold">Blueprint</h4>
-            <p className="text-sm mt-2 text-slate-700">Clear plan: GPTs, automations, success metrics.</p>
-          </li>
-          <li className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h4 className="font-semibold">Build</h4>
-            <p className="text-sm mt-2 text-slate-700">We set up GPTs, routes, prompts, and integrations.</p>
-          </li>
-          <li className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h4 className="font-semibold">Maintain</h4>
-            <p className="text-sm mt-2 text-slate-700">Ongoing optimization, new use-cases, faster results.</p>
-          </li>
-        </ol>
-        <div className="mt-8"><CTAButton href="#contact">Book Your Free Audit Call</CTAButton></div>
-      </Section>
-
-      {/* PRICING */}
-      <Section id="pricing" title="Simple, Transparent Pricing">
-        <div className="grid md:grid-cols-3 gap-6">
-          <PriceCard name="Setup Package" price="$499 one-time" features={["Custom GPT","1–2 key automations","Documentation & onboarding"]} />
-          <PriceCard name="Monthly Maintenance" price="$79 / month" features={["Prompt tuning","Minor feature tweaks","Priority support"]} />
-          <PriceCard highlight name="Growth Plan" price="$699 setup + $99 / month" features={["Everything in Setup","Maintenance included","Quarterly roadmap"]} />
-        </div>
-        <div className="mt-8 flex gap-4"><CTAButton href="#contact">Get Started</CTAButton></div>
-      </Section>
-
-      {/* TESTIMONIALS */}
-      <Section title="Real Results from Real Businesses">
-        <div className="grid md:grid-cols-3 gap-6">
-          <Quote text="Automated 70% of our intake—saved ~15 hours/week." author="Megan L., Agency Owner" />
-          <Quote text="Customer email triage now runs itself. Huge time saver." author="Tom R., HVAC" />
-          <Quote text="Fast build, clean docs, ongoing tweaks. Worth it." author="Sara D., E-commerce" />
-        </div>
-      </Section>
-
-      {/* ABOUT */}
-      <Section title="Your AI Partner for the Long Run" subtitle="We make AI practical. We build systems that ship quickly, pay for themselves, and keep getting better.">
-        <p className="text-slate-700 max-w-3xl">Clear communication, clean hand-offs, and measurable results—without the jargon. Everything we create is designed to work, not just look smart.</p>
-      </Section>
-
-      {/* CTA / CONTACT */}
-      <Section id="contact" title="Your AI Setup Starts Here" subtitle="Book a free call and see how fast AI can start working for you.">
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          <div className="rounded-2xl bg-white p-6 border border-slate-200">
-            {/* Calendly Embed placeholder; swap with your embed when ready */}
-            <div className="aspect-video w-full rounded-xl bg-mist border border-slate-200 flex items-center justify-center text-slate-500">Add Calendly embed here</div>
-            <p className="mt-3 text-sm text-slate-600">Prefer email? hello@quicksetupai.com</p>
-          </div>
-
-          {/* UPDATED FORM (posts to your API instead of mailto) */}
-          <div className="rounded-2xl bg-white p-6 border border-slate-200">
-            <h3 className="font-semibold text-lg">Quick Contact</h3>
-            <p className="text-sm text-slate-700">Tell us your goal and we’ll reply with a quick plan.</p>
-            <form className="mt-4 grid gap-3" action="/api/contact" method="post">
-              {/* Honeypot field (hidden to humans; bots often fill it) */}
-              <input type="text" name="company" tabIndex={-1} autoComplete="off" className="hidden" />
-              <input required className="rounded-lg border border-slate-300 px-3 py-2" placeholder="Name" name="name" />
-              <input required type="email" className="rounded-lg border border-slate-300 px-3 py-2" placeholder="Email" name="email" />
-              <textarea required className="rounded-lg border border-slate-300 px-3 py-2" placeholder="What do you want to automate?" name="message" rows={4} />
-              <button className="rounded-xl bg-violet text-white px-5 py-3 font-semibold hover:opacity-90" type="submit">Send</button>
-            </form>
-            <p className="text-xs text-slate-500 mt-3">We’ll never share your info. Replies usually within 1 business day.</p>
+          <div className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition">
+            <h3 className="text-xl font-semibold text-midnight mb-2">Enterprise</h3>
+            <p className="text-slate-600 mb-3">For full AI system integration.</p>
+            <p className="font-bold text-2xl text-midnight mb-4">Custom</p>
+            <ul className="text-slate-600 space-y-1 text-sm">
+              <li>✔ Unlimited automations</li>
+              <li>✔ Dedicated support</li>
+              <li>✔ Custom AI agents</li>
+            </ul>
           </div>
         </div>
       </Section>
 
-      {/* FOOTER */}
-      <footer className="py-10 border-t border-slate-200">
-        <div className="mx-auto max-w-6xl px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-slate-600">
-          <p>© {new Date().getFullYear()} QuickSetupAI — All Rights Reserved</p>
-          <p>Custom AI systems for small businesses — built fast, priced low, maintained long-term.</p>
-        </div>
-      </footer>
-    </main>
-  );
-}
+      {/* --- CONTACT --- */}
+      <Section
+        id="contact"
+        title="Contact Us"
+        subtitle="Let’s start your automation journey. Fill out the form below and we’ll reply soon."
+      >
+        <form
+          className="mt-6 grid gap-4 max-w-lg"
+          action="/api/contact"
+          method="post"
+        >
+          <input
+            required
+            className="rounded-lg border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-violet focus:outline-none"
+            placeholder="Your name"
+            name="name"
+          />
+          <input
+            required
+            type="email"
+            className="rounded-lg border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-violet focus:outline-none"
+            placeholder="Your email"
+            name="email"
+          />
+          <textarea
+            required
+            className="rounded-lg border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-violet focus:outline-none"
+            placeholder="Your message"
+            name="message"
+            rows={5}
+          />
+          <button
+            className="rounded-xl bg-violet text-white px-6 py-3 font-semibold hover:opacity-90 transition"
+            type="submit"
+          >
+            Send Message
+          </button>
+        </form>
 
-function CardStat({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="rounded-2xl bg-white p-6 border border-slate-200">
-      <p className="text-sm text-slate-500">{title}</p>
-      <p className="mt-1 text-xl font-semibold text-midnight">{value}</p>
-    </div>
-  );
-}
-
-function PriceCard({ name, price, features, highlight }: { name: string; price: string; features: string[]; highlight?: boolean; }) {
-  return (
-    <div className={`rounded-2xl p-6 border ${highlight ? "border-violet" : "border-slate-200"} bg-white relative`}>
-      {highlight && <span className="absolute -top-3 right-6 bg-violet text-white text-xs px-2 py-1 rounded-md">Popular</span>}
-      <h3 className="font-semibold text-lg">{name}</h3>
-      <p className="mt-1 text-2xl font-extrabold text-midnight">{price}</p>
-      <ul className="mt-4 space-y-2 text-sm text-slate-700">
-        {features.map((f, i) => <li key={i}>• {f}</li>)}
-      </ul>
-      <div className="mt-6"><CTAButton href="#contact">Choose Plan</CTAButton></div>
-    </div>
-  );
-}
-
-function Quote({ text, author }: { text: string; author: string }) {
-  return (
-    <blockquote className="rounded-2xl bg-white p-6 border border-slate-200 text-slate-800">
-      <p>“{text}”</p>
-      <footer className="mt-3 text-sm text-slate-500">— {author}</footer>
-    </blockquote>
+        <p className="mt-4 text-slate-600 text-sm">
+          Prefer email? Reach us directly at{" "}
+          <a
+            href="mailto:contactquicksetupai@gmail.com"
+            className="text-violet underline hover:no-underline"
+          >
+            contactquicksetupai@gmail.com
+          </a>
+        </p>
+      </Section>
+    </>
   );
 }
