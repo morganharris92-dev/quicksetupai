@@ -147,13 +147,8 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* FOOTER */}
-      <footer className="py-10 border-t border-slate-200">
-        <div className="mx-auto max-w-6xl px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-slate-600">
-          <p>© {new Date().getFullYear()} QuickSetupAI — All Rights Reserved</p>
-          <p>Custom AI systems for small businesses — built fast, priced low, maintained long-term.</p>
-        </div>
-      </footer>
+      {/* FOOTER (now uses the shared component with links/icons) */}
+      <SiteFooter />
     </main>
   );
 }
