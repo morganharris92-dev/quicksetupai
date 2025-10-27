@@ -15,14 +15,18 @@ export default function Home() {
             Stop wasting time on prompts and plugins. We’ll set up your entire AI system—tailored to your business—in days, not months.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <CTAButton href="#book">Book a Free AI Setup Call</CTAButton>
+            <CTAButton href="#contact">Book a Free AI Setup Call</CTAButton>
             <CTAButton href="#pricing" variant="secondary">See Pricing</CTAButton>
           </div>
         </div>
       </div>
 
-      {/* WHAT WE DO */}
-      <Section title="We Build AI Systems That Actually Make You Money" subtitle="Custom GPTs, workflow automations, and long-term maintenance so you never have to touch the tech.">
+      {/* WHAT WE DO (SERVICES) */}
+      <Section
+        id="services"
+        title="We Build AI Systems That Actually Make You Money"
+        subtitle="Custom GPTs, workflow automations, and long-term maintenance so you never have to touch the tech."
+      >
         <div className="grid md:grid-cols-3 gap-6">
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">Custom GPT Development</h3>
@@ -69,7 +73,7 @@ export default function Home() {
             <p className="text-sm mt-2 text-slate-700">Ongoing optimization, new use-cases, faster results.</p>
           </li>
         </ol>
-        <div className="mt-8"><CTAButton href="#book">Book Your Free Audit Call</CTAButton></div>
+        <div className="mt-8"><CTAButton href="#contact">Book Your Free Audit Call</CTAButton></div>
       </Section>
 
       {/* PRICING */}
@@ -79,7 +83,7 @@ export default function Home() {
           <PriceCard name="Monthly Maintenance" price="$79 / month" features={["Prompt tuning","Minor feature tweaks","Priority support"]} />
           <PriceCard highlight name="Growth Plan" price="$699 setup + $99 / month" features={["Everything in Setup","Maintenance included","Quarterly roadmap"]} />
         </div>
-        <div className="mt-8 flex gap-4"><CTAButton href="#book">Get Started</CTAButton></div>
+        <div className="mt-8 flex gap-4"><CTAButton href="#contact">Get Started</CTAButton></div>
       </Section>
 
       {/* TESTIMONIALS */}
@@ -97,7 +101,7 @@ export default function Home() {
       </Section>
 
       {/* CTA / CONTACT */}
-      <Section id="book" title="Your AI Setup Starts Here" subtitle="Book a free call and see how fast AI can start working for you.">
+      <Section id="contact" title="Your AI Setup Starts Here" subtitle="Book a free call and see how fast AI can start working for you.">
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             {/* Calendly Embed placeholder; swap with your embed when ready */}
@@ -147,7 +151,7 @@ function PriceCard({ name, price, features, highlight }: { name: string; price: 
       <ul className="mt-4 space-y-2 text-sm text-slate-700">
         {features.map((f, i) => <li key={i}>• {f}</li>)}
       </ul>
-      <div className="mt-6"><CTAButton href="#book">Choose Plan</CTAButton></div>
+      <div className="mt-6"><CTAButton href="#contact">Choose Plan</CTAButton></div>
     </div>
   );
 }
