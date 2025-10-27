@@ -122,19 +122,17 @@ export default function Home() {
       {/* CTA / CONTACT */}
       <Section id="contact" title="Your AI Setup Starts Here" subtitle="Book a free call and see how fast AI can start working for you.">
         <div className="grid md:grid-cols-2 gap-8 items-start">
-          {/* CALENDLY EMBED */}
+          {/* CALENDLY EMBED (iframe version: reliable, no external script needed) */}
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <div className="w-full rounded-xl overflow-hidden border border-slate-200">
-              <div
-                className="calendly-inline-widget"
-                data-url="https://calendly.com/morgan-harris92/30min"
-                style={{ minWidth: "320px", height: "700px" }}
-              ></div>
-              <script
-                type="text/javascript"
-                src="https://assets.calendly.com/assets/external/widget.js"
-                async
-              ></script>
+              <iframe
+                title="Book a call — Calendly"
+                src="https://calendly.com/morgan-harris92/30min?hide_event_type_details=1&hide_gdpr_banner=1"
+                className="w-full"
+                style={{ minWidth: 320, height: 700 }}
+                loading="lazy"
+                allow="clipboard-write; fullscreen"
+              />
             </div>
             <p className="mt-3 text-sm text-slate-600">Prefer email? contactquicksetupai@gmail.com</p>
           </div>
