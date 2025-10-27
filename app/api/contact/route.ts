@@ -1,119 +1,50 @@
 // app/api/contact/route.ts
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-export const runtime = "edge"; // great on Cloudflare/Next-on-Pages
-
-// Where YOU receive messages:
-const TO = "contactquicksetupai@gmail.com";
-
-// The visible "From" line on the email your inbox receives.
-// This must be on a domain verified in Resend DNS, but it doesn't need a real mailbox.
-const FROM = "QuickSetupAI <no-reply@quicksetupai.com>";
+export const runtime = "edge"; // required for Cloudflare/Next.js edge compatibility
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function sanitize(s: string) {
-  return s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+// your destination email
+const TO = "contactquicksetupai@gmail.com";
+const FROM = "QuickSetupAI <onboarding@resend.dev>";
 
 export async function POST(req: NextRequest) {
   try {
-    const contentType = req.headers.get("content-type") || "";
-    let name = "";
-    let email = "";
-    let message = "";
-
-    if (contentType.includes("application/json")) {
-      const body = await req.json();
-      name = (body.name || "").toString();
-      email = (body.email || "").toString();
-      message = (body.message || "").toString();
-    } else if (contentType.includes("application/x-www-form-urlencoded")) {
-      const form = await req.formData();
-      name = (form.get("name") || "").toString();
-      email = (form.get("email") || "").toString();
-      message = (form.get("message") || "").toString();
-    } else if (contentType.includes("text/plain")) {
-      const text = await req.text();
-      // naive parse of key=value lines
-      for (const line of text.split("\n")) {
-        const [k, ...rest] = line.split(":");
-        const v = rest.join(":").trim();
-        if (k?.toLowerCase() === "name") name = v;
-        if (k?.toLowerCase() === "email") email = v;
-        if (k?.toLowerCase() === "message") message = v;
-      }
-    } else {
-      return new Response(JSON.stringify({ ok: false, error: "Unsupported Content-Type" }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      });
-    }
+    const formData = await req.formData();
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const message = formData.get("message") as string;
 
     if (!name || !email || !message) {
-      return new Response(JSON.stringify({ ok: false, error: "Missing name, email, or message" }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      });
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // basic email sanity
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return new Response(JSON.stringify({ ok: false, error: "Invalid email" }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    const subject = `New QuickSetupAI inquiry from ${name}`;
-    const safeName = sanitize(name);
-    const safeEmail = sanitize(email);
-    const safeMessage = sanitize(message);
-
+    const subject = `New Contact Form Submission from ${name}`;
+    const text = `Name: ${name}\nEmail: ${email}\nMessage:\n${message}`;
     const html = `
-      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${safeName}</p>
-        <p><strong>Email:</strong> ${safeEmail}</p>
-        <p><strong>Message:</strong></p>
-        <pre style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">${safeMessage}</pre>
+      <div style="font-family: sans-serif; padding: 16px;">
+        <h2>New Contact Submission</h2>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Message:</b><br>${message}</p>
       </div>
     `;
-    const text = `New Contact Form Submission
 
-Name: ${name}
-Email: ${email}
-
-Message:
-${message}
-`;
-
-    const { error } = await resend.emails.send({
+    const data = await resend.emails.send({
       from: FROM,
       to: TO,
-      // IMPORTANT: snake_case is required by Resend types
-      reply_to: email,
+      replyTo: email, // ✅ fixed property
       subject,
       html,
-      text
+      text,
     });
 
-    if (error) {
-      return new Response(JSON.stringify({ ok: false, error: String(error) }), {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ ok: false, error: err?.message || "Unknown error" }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
+    console.log("Resend API response:", data);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL || "/"}?sent=1`, 303);
+  } catch (error) {
+    console.error("Email send error:", error);
+    return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
   }
 }
