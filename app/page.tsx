@@ -1,6 +1,7 @@
 // app/page.tsx
 import CTAButton from "@/components/CTAButton";
 import Section from "@/components/Section";
+import ContactForm from "@/components/ContactForm"; // uses fetch to /api/contact and shows success banner
 
 export default function Home() {
   return (
@@ -31,18 +32,26 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-6">
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">Custom GPT Development</h3>
-            <p className="mt-2 text-sm text-slate-700">Branded GPTs trained on your FAQs, tone, and SOPs to triage emails, leads, and support.</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Branded GPTs trained on your FAQs, tone, and SOPs to triage emails, leads, and support.
+            </p>
           </div>
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">Workflow Automation</h3>
-            <p className="mt-2 text-sm text-slate-700">AI flows that summarize calls, draft proposals, schedule follow-ups, and sync with your tools.</p>
+            <p className="mt-2 text-sm text-slate-700">
+              AI flows that summarize calls, draft proposals, schedule follow-ups, and sync with your tools.
+            </p>
           </div>
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">AI Maintenance & Updates</h3>
-            <p className="mt-2 text-sm text-slate-700">Monthly tune-ups so your stack stays fast, accurate, and compatible with new model updates.</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Monthly tune-ups so your stack stays fast, accurate, and compatible with new model updates.
+            </p>
           </div>
         </div>
-        <div className="mt-8"><CTAButton href="#process">How Our Process Works</CTAButton></div>
+        <div className="mt-8">
+          <CTAButton href="#process">How Our Process Works</CTAButton>
+        </div>
       </Section>
 
       {/* VALUE */}
@@ -74,7 +83,9 @@ export default function Home() {
             <p className="text-sm mt-2 text-slate-700">Ongoing optimization, new use-cases, faster results.</p>
           </li>
         </ol>
-        <div className="mt-8"><CTAButton href="#contact">Book Your Free Audit Call</CTAButton></div>
+        <div className="mt-8">
+          <CTAButton href="#contact">Book Your Free Audit Call</CTAButton>
+        </div>
       </Section>
 
       {/* PRICING */}
@@ -84,7 +95,9 @@ export default function Home() {
           <PriceCard name="Monthly Maintenance" price="$79 / month" features={["Prompt tuning","Minor feature tweaks","Priority support"]} />
           <PriceCard highlight name="Growth Plan" price="$699 setup + $99 / month" features={["Everything in Setup","Maintenance included","Quarterly roadmap"]} />
         </div>
-        <div className="mt-8 flex gap-4"><CTAButton href="#contact">Get Started</CTAButton></div>
+        <div className="mt-8 flex gap-4">
+          <CTAButton href="#contact">Get Started</CTAButton>
+        </div>
       </Section>
 
       {/* TESTIMONIALS */}
@@ -97,8 +110,13 @@ export default function Home() {
       </Section>
 
       {/* ABOUT */}
-      <Section title="Your AI Partner for the Long Run" subtitle="We make AI practical. We build systems that ship quickly, pay for themselves, and keep getting better.">
-        <p className="text-slate-700 max-w-3xl">Clear communication, clean hand-offs, and measurable results—without the jargon. Everything we create is designed to work, not just look smart.</p>
+      <Section
+        title="Your AI Partner for the Long Run"
+        subtitle="We make AI practical. We build systems that ship quickly, pay for themselves, and keep getting better."
+      >
+        <p className="text-slate-700 max-w-3xl">
+          Clear communication, clean hand-offs, and measurable results—without the jargon. Everything we create is designed to work, not just look smart.
+        </p>
       </Section>
 
       {/* CTA / CONTACT */}
@@ -106,20 +124,21 @@ export default function Home() {
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             {/* Calendly Embed placeholder; swap with your embed when ready */}
-            <div className="aspect-video w-full rounded-xl bg-mist border border-slate-200 flex items-center justify-center text-slate-500">Add Calendly embed here</div>
-            <p className="mt-3 text-sm text-slate-600">Prefer email? hello@quicksetupai.com</p>
+            <div className="aspect-video w-full rounded-xl bg-mist border border-slate-200 flex items-center justify-center text-slate-500">
+              Add Calendly embed here
+            </div>
+            <p className="mt-3 text-sm text-slate-600">Prefer email? contactquicksetupai@gmail.com</p>
           </div>
+
+          {/* Replaces the raw HTML form to prevent navigating to the JSON page.
+              Visual layout and spacing remain the same. */}
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">Quick Contact</h3>
             <p className="text-sm text-slate-700">Tell us your goal and we’ll reply with a quick plan.</p>
-            {/* UPDATED: posts to your API instead of mailto */}
-            <form className="mt-4 grid gap-3" action="/api/contact" method="post">
-              <input required className="rounded-lg border border-slate-300 px-3 py-2" placeholder="Name" name="name" />
-              <input required type="email" className="rounded-lg border border-slate-300 px-3 py-2" placeholder="Email" name="email" />
-              <textarea className="rounded-lg border border-slate-300 px-3 py-2" placeholder="What do you want to automate?" name="message" rows={4} />
-              <button className="rounded-xl bg-violet text-white px-5 py-3 font-semibold hover:opacity-90" type="submit">Send</button>
-            </form>
-            <p className="text-xs text-slate-500 mt-3">We’ll never share your info. Replies usually within 1 business day.</p>
+            <ContactForm />
+            <p className="text-xs text-slate-500 mt-3">
+              We’ll never share your info. Replies usually within 1 business day.
+            </p>
           </div>
         </div>
       </Section>
@@ -144,16 +163,32 @@ function CardStat({ title, value }: { title: string; value: string }) {
   );
 }
 
-function PriceCard({ name, price, features, highlight }: { name: string; price: string; features: string[]; highlight?: boolean; }) {
+function PriceCard({
+  name,
+  price,
+  features,
+  highlight,
+}: {
+  name: string;
+  price: string;
+  features: string[];
+  highlight?: boolean;
+}) {
   return (
     <div className={`rounded-2xl p-6 border ${highlight ? "border-violet" : "border-slate-200"} bg-white relative`}>
-      {highlight && <span className="absolute -top-3 right-6 bg-violet text-white text-xs px-2 py-1 rounded-md">Popular</span>}
+      {highlight && (
+        <span className="absolute -top-3 right-6 bg-violet text-white text-xs px-2 py-1 rounded-md">Popular</span>
+      )}
       <h3 className="font-semibold text-lg">{name}</h3>
       <p className="mt-1 text-2xl font-extrabold text-midnight">{price}</p>
       <ul className="mt-4 space-y-2 text-sm text-slate-700">
-        {features.map((f, i) => <li key={i}>• {f}</li>)}
+        {features.map((f, i) => (
+          <li key={i}>• {f}</li>
+        ))}
       </ul>
-      <div className="mt-6"><CTAButton href="#contact">Choose Plan</CTAButton></div>
+      <div className="mt-6">
+        <CTAButton href="#contact">Choose Plan</CTAButton>
+      </div>
     </div>
   );
 }
