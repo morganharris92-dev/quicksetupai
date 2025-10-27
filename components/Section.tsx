@@ -10,7 +10,10 @@ export default function Section({
   children?: React.ReactNode;
 }) {
   return (
-    <section id={id} className="py-16 md:py-24">
+    <section
+      id={id}
+      className="py-16 md:py-24 scroll-mt-24 md:scroll-mt-32"
+    >
       <div className="mx-auto max-w-6xl px-6">
         <header className="mb-8">
           <h2 className="text-2xl md:text-4xl font-bold text-midnight">{title}</h2>
