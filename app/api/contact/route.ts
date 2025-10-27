@@ -7,14 +7,20 @@ export const runtime = "edge"; // great on Cloudflare/Next-on-Pages
 // Where YOU receive messages:
 const TO = "contactquicksetupai@gmail.com";
 
-// The visible "From" line on the email your inbox receives.
-// This must be on a domain verified in Resend DNS, but it doesn't need a real mailbox.
+// The visible "From" line on emails sent via Resend.
+// Must be on your verified domain (quicksetupai.com).
 const FROM = "QuickSetupAI <no-reply@quicksetupai.com>";
 
+// Auto-reply will also come from the same FROM address.
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function sanitize(s: string) {
-  return s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// small, safe HTML escaping
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export async function POST(req: NextRequest) {
@@ -36,7 +42,6 @@ export async function POST(req: NextRequest) {
       message = (form.get("message") || "").toString();
     } else if (contentType.includes("text/plain")) {
       const text = await req.text();
-      // naive parse of key:value lines
       for (const line of text.split("\n")) {
         const [k, ...rest] = line.split(":");
         const v = rest.join(":").trim();
@@ -67,9 +72,9 @@ export async function POST(req: NextRequest) {
     }
 
     const subject = `New QuickSetupAI inquiry from ${name}`;
-    const safeName = sanitize(name);
-    const safeEmail = sanitize(email);
-    const safeMessage = sanitize(message);
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeMessage = escapeHtml(message);
 
     const html = `
       <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
@@ -89,54 +94,52 @@ Message:
 ${message}
 `;
 
-    // 1) Send notification to you
-    const resOwner = await resend.emails.send({
+    // 1) Send the inquiry to you
+    const adminSend = await resend.emails.send({
       from: FROM,
       to: TO,
-      // keep the same casing that worked in your build
-      reply_to: email, // replies in your inbox go back to the sender
+      replyTo: email, // <- correct casing for your installed Resend SDK
       subject,
       html,
-      text
+      text,
     });
 
-    if (resOwner.error) {
-      return new Response(JSON.stringify({ ok: false, error: String(resOwner.error) }), {
+    if (adminSend.error) {
+      return new Response(JSON.stringify({ ok: false, error: String(adminSend.error) }), {
         status: 500,
         headers: { "content-type": "application/json" },
       });
     }
 
-    // 2) Send auto-reply to the lead (best-effort)
-    const autoSubject = "Thanks! We’ve got your message ✅";
-    const autoHtml = `
-      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height:1.5">
-        <p>Hi ${safeName},</p>
-        <p>Thanks for reaching out. We’ve got your message and we’ll reply within 24 hours with next steps.</p>
-        <p>If you’d like to talk sooner, you can book a time here:<br/>
-          <a href="https://calendly.com/morgan-harris92/30min">Book a Free AI Setup Call</a>
-        </p>
-        <p>— QuickSetupAI</p>
+    // 2) Auto-reply to the sender
+    const autoReplySubject = "Thanks! We’ve got your info — QuickSetupAI";
+    const autoReplyHtml = `
+      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
+        <h2>Thanks, ${safeName}!</h2>
+        <p>We’ve received your message and will review your business and send a free AI Blueprint within 24 hours.</p>
+        <p>Want to talk sooner? You can book a call here:</p>
+        <p><a href="https://calendly.com/morgan-harris92/30min">Book a quick setup call</a></p>
+        <hr />
+        <p style="color:#64748b;font-size:12px;">Sent by QuickSetupAI · quicksetupai.com</p>
       </div>
     `;
-    const autoText =
-`Hi ${name},
+    const autoReplyText =
+      `Thanks, ${name}!\n\n` +
+      `We’ve received your message and will review your business and send a free AI Blueprint within 24 hours.\n\n` +
+      `Book a quick setup call: https://calendly.com/morgan-harris92/30min\n`;
 
-Thanks for reaching out. We’ve got your message and we’ll reply within 24 hours with next steps.
-
-Prefer to talk sooner? Book here:
-https://calendly.com/morgan-harris92/30min
-
-— QuickSetupAI
-`;
-    // Fire and forget; no need to block success if this fails
-    await resend.emails.send({
+    const userSend = await resend.emails.send({
       from: FROM,
       to: email,
-      subject: autoSubject,
-      html: autoHtml,
-      text: autoText
+      subject: autoReplySubject,
+      html: autoReplyHtml,
+      text: autoReplyText,
     });
+
+    if (userSend.error) {
+      // don't fail the whole request if auto-reply trips — you still got the lead
+      console.warn("Auto-reply failed:", userSend.error);
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
