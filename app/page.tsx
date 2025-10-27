@@ -108,13 +108,17 @@ export default function Home() {
             <div className="aspect-video w-full rounded-xl bg-mist border border-slate-200 flex items-center justify-center text-slate-500">Add Calendly embed here</div>
             <p className="mt-3 text-sm text-slate-600">Prefer email? hello@quicksetupai.com</p>
           </div>
+
+          {/* UPDATED FORM (posts to your API instead of mailto) */}
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">Quick Contact</h3>
             <p className="text-sm text-slate-700">Tell us your goal and we’ll reply with a quick plan.</p>
-            <form className="mt-4 grid gap-3" action="mailto:hello@quicksetupai.com" method="post" encType="text/plain">
+            <form className="mt-4 grid gap-3" action="/api/contact" method="post">
+              {/* Honeypot field (hidden to humans; bots often fill it) */}
+              <input type="text" name="company" tabIndex={-1} autoComplete="off" className="hidden" />
               <input required className="rounded-lg border border-slate-300 px-3 py-2" placeholder="Name" name="name" />
               <input required type="email" className="rounded-lg border border-slate-300 px-3 py-2" placeholder="Email" name="email" />
-              <textarea className="rounded-lg border border-slate-300 px-3 py-2" placeholder="What do you want to automate?" name="message" rows={4} />
+              <textarea required className="rounded-lg border border-slate-300 px-3 py-2" placeholder="What do you want to automate?" name="message" rows={4} />
               <button className="rounded-xl bg-violet text-white px-5 py-3 font-semibold hover:opacity-90" type="submit">Send</button>
             </form>
             <p className="text-xs text-slate-500 mt-3">We’ll never share your info. Replies usually within 1 business day.</p>
