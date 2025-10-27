@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "QuickSetupAI",
     images: [
       {
-        url: "/og-preview.png", // 👈 you’ll create this in Step 3
+        url: "/og-preview.png",
         width: 1200,
         height: 630,
         alt: "QuickSetupAI preview banner",
@@ -46,3 +46,18 @@ export const metadata: Metadata = {
     icon: "/favicon512.ico",
   },
 };
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="bg-gray-50 text-gray-900">
+        <Header />
+        <main className="min-h-screen">{children}</main>
+      </body>
+    </html>
+  );
+}
