@@ -1,81 +1,102 @@
 // app/api/contact/route.ts
-import { NextResponse } from "next/server";
+import { Resend } from "resend";
 
-// Make this route run on Cloudflare's Edge runtime
-export const runtime = "edge";
+export const runtime = "edge"; // runs great on Cloudflare/Next-on-Pages
 
-// --- EDIT THIS: set where you want to RECEIVE emails ---
-const RECIPIENTS = ["hello@quicksetupai.com"]; 
-// If you haven't set up hello@quicksetupai.com yet, temporarily do: 
-// const RECIPIENTS = ["yourgmail@example.com"];
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Optional helper to safely render text in HTML
-function escapeHtml(str: string) {
-  return str.replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]!));
+// If you verify a sender in Resend later, set RESEND_FROM in Cloudflare.
+// Until then, Resend’s sandbox sender works for testing:
+const FROM = process.env.RESEND_FROM || "onboarding@resend.dev";
+
+// Where you want to receive the messages:
+const TO = "contactquicksetupai@gmail.com";
+
+function isEmail(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
+  // Support both standard form POSTs and JSON fetches
+  let name = "";
+  let email = "";
+  let message = "";
+  let honeypot = "";
+
+  const ctype = req.headers.get("content-type") || "";
+
+  if (ctype.includes("application/json")) {
+    const body = await req.json().catch(() => ({}));
+    name = (body.name || "").toString().trim();
+    email = (body.email || "").toString().trim();
+    message = (body.message || "").toString().trim();
+    honeypot = (body.company || "").toString().trim();
+  } else {
+    const form = await req.formData();
+    name = String(form.get("name") || "").trim();
+    email = String(form.get("email") || "").trim();
+    message = String(form.get("message") || "").trim();
+    // honeypot (hidden field). Bots will often fill it.
+    honeypot = String(form.get("company") || "").trim();
+  }
+
+  // Silently accept bots that fill the honeypot
+  if (honeypot) return new Response(null, { status: 204 });
+
+  // Basic validation
+  if (!name || !email || !message || !isEmail(email)) {
+    return Response.json({ ok: false, error: "Invalid form data." }, { status: 400 });
+  }
+
+  // Compose email
+  const subject = `New QuickSetupAI contact from ${name}`;
+  const html = `
+    <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height:1.6;">
+      <h2>New contact submission</h2>
+      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+      <p><strong>Message:</strong><br/>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>
+    </div>
+  `;
+  const text = `New contact submission
+
+Name: ${name}
+Email: ${email}
+
+Message:
+${message}
+`;
+
   try {
-    // The form posts as application/x-www-form-urlencoded
-    const formData = await request.formData();
-
-    const name = String(formData.get("name") || "").trim();
-    const email = String(formData.get("email") || "").trim();
-    const message = String(formData.get("message") || "").trim();
-
-    // Honeypot (hidden field). Bots will fill this; humans won’t.
-    const company = String(formData.get("company") || "").trim();
-    if (company) {
-      // Silently succeed to /thanks to avoid tipping off bots
-      return NextResponse.redirect(new URL("/thanks", request.url), 303);
-    }
-
-    if (!name || !email || !message) {
-      return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
-    }
-
-    // Use your verified sender if available, otherwise use onboarding@resend.dev
-    const fromAddress =
-      process.env.RESEND_FROM || "QuickSetupAI <onboarding@resend.dev>";
-
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: RECIPIENTS,
-        reply_to: email,
-        subject: `New contact from ${name}`,
-        html: `
-          <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;">
-            <h2>New Contact Form Submission</h2>
-            <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-            <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-            <p><strong>Message:</strong></p>
-            <p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>
-          </div>
-        `,
-      }),
+    await resend.emails.send({
+      from: FROM,
+      to: TO,
+      replyTo: email, // reply in your inbox goes back to the sender
+      subject,
+      html,
+      text,
     });
 
-    if (!res.ok) {
-      const details = await res.text().catch(() => "No details");
-      return NextResponse.json(
-        { ok: false, error: "Resend API error", details },
-        { status: 502 }
-      );
+    // If the browser posted a regular form, redirect to thanks page
+    if (!ctype.includes("application/json")) {
+      return Response.redirect(new URL("/thanks", req.url), 303);
     }
-
-    // On success, send user to /thanks
-    return NextResponse.redirect(new URL("/thanks", request.url), 303);
+    return Response.json({ ok: true });
   } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, error: err?.message || "Unknown error" },
+    console.error("Resend error:", err);
+    return Response.json(
+      { ok: false, error: err?.message || "Failed to send email" },
       { status: 500 }
     );
   }
 }
 
+// Simple HTML escape to avoid any odd characters breaking markup
+function escapeHtml(s: string) {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
