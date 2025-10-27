@@ -1,115 +1,91 @@
 "use client";
 
-import { useState } from "react";
-
-type Status = { type: "idle" | "sending" | "success" | "error"; message?: string };
+import { useState, useEffect } from "react";
 
 export default function ContactForm() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [followUp, setFollowUp] = useState<"Email" | "Call">("Email");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [pref, setPref] = useState<"Email" | "Call">("Email");
   const [phone, setPhone] = useState("");
-  const [status, setStatus] = useState<Status>({ type: "idle" });
 
-  const reset = () => {
-    setName("");
-    setEmail("");
-    setMessage("");
-    setFollowUp("Email");
-    setPhone("");
-  };
+  // If user switches away from "Call", clear phone to avoid stale submission
+  useEffect(() => {
+    if (pref !== "Call" && phone !== "") {
+      setPhone("");
+    }
+  }, [pref]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setStatus("sending");
 
-    // If Call is selected, phone is required
-    if (followUp === "Call" && !phone.trim()) {
-      setStatus({ type: "error", message: "Please add a phone number for a call-back." });
-      return;
+    const form = e.currentTarget;
+    const data = new FormData(form);
+
+    // Ensure our current dropdown/phone state is what gets sent
+    data.set("followup", pref);
+    if (pref === "Call") {
+      data.set("phone", phone.trim());
+    } else {
+      data.delete("phone");
     }
-
-    setStatus({ type: "sending" });
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          message,
-          followUp,
-          phone: followUp === "Call" ? phone : "", // don’t send stale value
-          source: "contact-form", // helpful for your inbox later
-        }),
+        body: data,
       });
-
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to send");
-
-      setStatus({ type: "success", message: "✅ Message sent! We typically respond within 24 hours." });
-      reset();
-    } catch (err: any) {
-      setStatus({
-        type: "error",
-        message: err?.message || "Failed to send message. Please try again.",
-      });
+      if (!res.ok) throw new Error(await res.text());
+      setStatus("sent");
+      form.reset();
+      setPref("Email");
+      setPhone("");
+    } catch {
+      setStatus("error");
     }
   }
 
-  // When switching away from Call, wipe the phone to avoid stale values
-  function onFollowUpChange(v: "Email" | "Call") {
-    setFollowUp(v);
-    if (v !== "Call") setPhone("");
-  }
-
   return (
-    <form onSubmit={onSubmit} className="mt-4 grid gap-3">
+    <form className="mt-4 grid gap-3" onSubmit={onSubmit}>
       <input
         required
         className="rounded-lg border border-slate-300 px-3 py-2"
         placeholder="Name"
         name="name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
       />
-
       <input
         required
         type="email"
         className="rounded-lg border border-slate-300 px-3 py-2"
         placeholder="Email"
         name="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
       />
 
-      {/* Preferred follow-up (already on your form) */}
+      {/* Preferred follow-up */}
       <div className="grid gap-2">
-        <label className="text-xs text-slate-500">Preferred follow-up (optional)</label>
+        <label className="text-sm text-slate-600">Preferred follow-up (optional)</label>
         <select
           className="rounded-lg border border-slate-300 px-3 py-2"
-          name="followUp"
-          value={followUp}
-          onChange={(e) => onFollowUpChange(e.target.value as "Email" | "Call")}
+          value={pref}
+          onChange={(e) => setPref(e.target.value as "Email" | "Call")}
+          name="followup"
         >
           <option>Email</option>
           <option>Call</option>
         </select>
       </div>
 
-      {/* Phone appears only when “Call” is selected. It becomes required in that case. */}
-      {followUp === "Call" && (
+      {/* Conditionally show Phone when Call is selected */}
+      {pref === "Call" && (
         <input
-          className="rounded-lg border border-slate-300 px-3 py-2"
-          placeholder="Phone"
-          name="phone"
+          type="tel"
           inputMode="tel"
-          pattern="^[0-9+()\-\s]{7,}$"
+          pattern="^[0-9+()\\-\\s]{7,}$"
           title="Please enter a valid phone number"
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          placeholder="Phone number"
+          name="phone"
+          required
           value={phone}
-          required={followUp === "Call"}
           onChange={(e) => setPhone(e.target.value)}
         />
       )}
@@ -119,32 +95,30 @@ export default function ContactForm() {
         placeholder="What do you want to automate?"
         name="message"
         rows={4}
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        required
       />
 
       <button
         className="rounded-xl bg-violet text-white px-5 py-3 font-semibold hover:opacity-90 disabled:opacity-60"
         type="submit"
-        disabled={status.type === "sending"}
+        disabled={status === "sending"}
       >
-        {status.type === "sending" ? "Sending..." : "Send"}
+        {status === "sending" ? "Sending..." : "Send"}
       </button>
 
-      {status.type === "success" && (
-        <p className="mt-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {status.message}
+      {status === "sent" && (
+        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+          Message sent! We typically respond within 24 hours.
         </p>
       )}
-      {status.type === "error" && (
-        <p className="mt-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {status.message}
+      {status === "error" && (
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          Failed to send message. Please try again in a moment.
         </p>
       )}
 
-      <p className="text-xs text-slate-500 mt-1">
-        We’ll never share your info. Replies usually within 1 business day.
-      </p>
+      {/* Keep your original note (only once) */}
+      <p className="text-xs text-slate-500">We’ll never share your info. Replies usually within 1 business day.</p>
     </form>
   );
 }
