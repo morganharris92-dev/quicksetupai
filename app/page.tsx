@@ -2,6 +2,7 @@
 import CTAButton from "@/components/CTAButton";
 import Section from "@/components/Section";
 import ContactForm from "@/components/ContactForm";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function Home() {
   return (
