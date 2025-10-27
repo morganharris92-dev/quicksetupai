@@ -1,88 +1,178 @@
-// components/ContactForm.tsx
 "use client";
 
 import { useState } from "react";
 
 export default function ContactForm() {
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  const [error, setError] = useState<string>("");
+
+  // form fields
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [business, setBusiness] = useState("");
+  const [website, setWebsite] = useState("");
+  const [tools, setTools] = useState("");
+  const [budget, setBudget] = useState("");
+  const [followUp, setFollowUp] = useState<"Email" | "Call" | "">("");
+  const [message, setMessage] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); // <-- prevents navigation to /api/contact
+    e.preventDefault();
     setStatus("sending");
-    setError(null);
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData.entries());
+    setError("");
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          business,
+          website,
+          tools,
+          budget,
+          followUp,
+          message,
+        }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || "Failed to send message.");
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data?.ok !== true) {
+        throw new Error(data?.error || "Failed to send message");
       }
-      form.reset();
-      setStatus("success");
+
+      setStatus("ok");
+      // clear the form (optional)
+      setName("");
+      setEmail("");
+      setBusiness("");
+      setWebsite("");
+      setTools("");
+      setBudget("");
+      setFollowUp("");
+      setMessage("");
     } catch (err: any) {
       setStatus("error");
-      setError(err?.message || "Something went wrong. Please try again.");
+      setError(err?.message || "Failed to send message");
     }
   }
 
-  return (
-    <div>
-      {/* The fields look exactly like your current form */}
-      <form className="mt-4 grid gap-3" onSubmit={onSubmit}>
-        <input
-          required
-          className="rounded-lg border border-slate-300 px-3 py-2"
-          placeholder="Name"
-          name="name"
-        />
-        <input
-          required
-          type="email"
-          className="rounded-lg border border-slate-300 px-3 py-2"
-          placeholder="Email"
-          name="email"
-        />
-        <textarea
-          className="rounded-lg border border-slate-300 px-3 py-2"
-          placeholder="What do you want to automate?"
-          name="message"
-          rows={4}
-        />
-        <button
-          className="rounded-xl bg-violet text-white px-5 py-3 font-semibold hover:opacity-90 disabled:opacity-60"
-          type="submit"
-          disabled={status === "sending"}
-        >
-          {status === "sending" ? "Sending…" : "Send"}
-        </button>
-      </form>
+  const inputCls =
+    "rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet/20 focus:border-violet";
 
-      {/* Inline confirmation message — no layout change */}
-      <div className="mt-3" aria-live="polite" aria-atomic="true">
-        {status === "success" && (
-          <p className="text-sm rounded-md bg-green-50 border border-green-200 text-green-700 px-3 py-2">
-            ✅ Message sent! We typically respond within 24 hours.
-          </p>
-        )}
-        {status === "error" && (
-          <p className="text-sm rounded-md bg-red-50 border border-red-200 text-red-700 px-3 py-2">
-            ❌ {error}
-          </p>
-        )}
+  return (
+    <form className="mt-4 grid gap-3" onSubmit={onSubmit} noValidate>
+      {/* Name / Email (required) */}
+      <input
+        required
+        className={inputCls}
+        placeholder="Name"
+        name="name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        autoComplete="name"
+      />
+      <input
+        required
+        type="email"
+        className={inputCls}
+        placeholder="Email"
+        name="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        autoComplete="email"
+      />
+
+      {/* New intake fields (optional unless you want otherwise) */}
+      <input
+        className={inputCls}
+        placeholder="Business name (optional)"
+        name="business"
+        value={business}
+        onChange={(e) => setBusiness(e.target.value)}
+        autoComplete="organization"
+      />
+      <input
+        className={inputCls}
+        placeholder="Website (optional)"
+        name="website"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+        autoComplete="url"
+      />
+      <input
+        className={inputCls}
+        placeholder="What tools do you use? (e.g., Google Workspace, Calendly, CRM)"
+        name="tools"
+        value={tools}
+        onChange={(e) => setTools(e.target.value)}
+      />
+
+      {/* Budget + Follow-up preference */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <select
+          className={inputCls}
+          name="budget"
+          value={budget}
+          onChange={(e) => setBudget(e.target.value)}
+        >
+          <option value="">Budget range (optional)</option>
+          <option value="$0–$500">$0–$500</option>
+          <option value="$500–$1,000">$500–$1,000</option>
+          <option value="$1,000–$2,500">$1,000–$2,500</option>
+          <option value="$2,500+">$2,500+</option>
+        </select>
+
+        <select
+          className={inputCls}
+          name="followUp"
+          value={followUp}
+          onChange={(e) => setFollowUp(e.target.value as any)}
+        >
+          <option value="">Preferred follow-up (optional)</option>
+          <option value="Email">Email</option>
+          <option value="Call">Call</option>
+        </select>
       </div>
 
-      <p className="text-xs text-slate-500 mt-3">
+      {/* Message (required) */}
+      <textarea
+        required
+        className={inputCls}
+        placeholder="What do you want to automate?"
+        name="message"
+        rows={4}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+
+      <button
+        className="rounded-xl bg-violet text-white px-5 py-3 font-semibold hover:opacity-90 disabled:opacity-60"
+        type="submit"
+        disabled={status === "sending"}
+      >
+        {status === "sending" ? "Sending…" : "Send"}
+      </button>
+
+      {status === "ok" && (
+        <div className="flex items-center gap-2 text-sm p-3 rounded-lg bg-green-100 border border-green-300 text-green-800">
+          <span aria-hidden>✅</span>
+          <span>Message sent! We typically respond within 24 hours.</span>
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="flex items-center gap-2 text-sm p-3 rounded-lg bg-red-100 border border-red-300 text-red-800">
+          <span aria-hidden>⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
+
+      <p className="text-xs text-slate-500">
         We’ll never share your info. Replies usually within 1 business day.
       </p>
-    </div>
+    </form>
   );
 }
