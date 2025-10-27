@@ -2,17 +2,19 @@
 import { NextRequest } from "next/server";
 import { Resend } from "resend";
 
-export const runtime = "edge";
+export const runtime = "edge"; // great on Cloudflare/Next-on-Pages
 
 // Where YOU receive messages:
 const TO = "contactquicksetupai@gmail.com";
 
-// Visible “From” (must be on your verified domain; doesn’t need a real inbox)
+// The visible "From" line on emails sent via Resend.
+// Must be on your verified domain (quicksetupai.com).
 const FROM = "QuickSetupAI <no-reply@quicksetupai.com>";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function sanitize(s: string) {
+// small, safe HTML escaping
+function escapeHtml(s: string) {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -23,11 +25,10 @@ function sanitize(s: string) {
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get("content-type") || "";
-
     let name = "";
     let email = "";
     let message = "";
-    let followUp = "";
+    let followup = "Email";
     let phone = "";
 
     if (contentType.includes("application/json")) {
@@ -35,14 +36,14 @@ export async function POST(req: NextRequest) {
       name = (body.name || "").toString();
       email = (body.email || "").toString();
       message = (body.message || "").toString();
-      followUp = (body.followUp || "").toString();
+      followup = (body.followup || "Email").toString();
       phone = (body.phone || "").toString();
-    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+    } else if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("form-data")) {
       const form = await req.formData();
       name = (form.get("name") || "").toString();
       email = (form.get("email") || "").toString();
       message = (form.get("message") || "").toString();
-      followUp = (form.get("followUp") || "").toString();
+      followup = (form.get("followup") || "Email").toString();
       phone = (form.get("phone") || "").toString();
     } else if (contentType.includes("text/plain")) {
       const text = await req.text();
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         if (k?.toLowerCase() === "name") name = v;
         if (k?.toLowerCase() === "email") email = v;
         if (k?.toLowerCase() === "message") message = v;
-        if (k?.toLowerCase() === "followup") followUp = v;
+        if (k?.toLowerCase() === "followup") followup = v;
         if (k?.toLowerCase() === "phone") phone = v;
       }
     } else {
@@ -68,6 +69,8 @@ export async function POST(req: NextRequest) {
         headers: { "content-type": "application/json" },
       });
     }
+
+    // basic email sanity
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return new Response(JSON.stringify({ ok: false, error: "Invalid email" }), {
         status: 400,
@@ -75,21 +78,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const subject = `New QuickSetupAI inquiry from ${name}`;
+    // If Call is requested, phone must be provided
+    if (String(followup).toLowerCase() === "call" && !phone.trim()) {
+      return new Response(JSON.stringify({ ok: false, error: "Phone is required when follow-up is Call" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
 
-    const safeName = sanitize(name);
-    const safeEmail = sanitize(email);
-    const safeMessage = sanitize(message);
-    const safeFollow = sanitize(followUp || "—");
-    const safePhone = sanitize(phone || "—");
+    const subject = `New QuickSetupAI inquiry from ${name}`;
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeMessage = escapeHtml(message);
+    const safeFollow = escapeHtml(followup);
+    const safePhone = escapeHtml(phone);
 
     const html = `
       <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
         <h2>New Contact Form Submission</h2>
         <p><strong>Name:</strong> ${safeName}</p>
         <p><strong>Email:</strong> ${safeEmail}</p>
-        <p><strong>Preferred follow-up:</strong> ${safeFollow}</p>
-        <p><strong>Phone (if call):</strong> ${safePhone}</p>
+        <p><strong>Preferred follow-up:</strong> ${safeFollow}${safeFollow.toLowerCase() === "call" && safePhone ? ` (Phone: ${safePhone})` : ""}</p>
         <p><strong>Message:</strong></p>
         <pre style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">${safeMessage}</pre>
       </div>
@@ -98,60 +107,56 @@ export async function POST(req: NextRequest) {
 
 Name: ${name}
 Email: ${email}
-Preferred follow-up: ${followUp || "—"}
-Phone (if call): ${phone || "—"}
+Preferred follow-up: ${followup}${String(followup).toLowerCase() === "call" && phone ? ` (Phone: ${phone})` : ""}
 
 Message:
 ${message}
 `;
 
-    // 1) Send to you
-    {
-      const { error } = await resend.emails.send({
-        from: FROM,
-        to: TO,
-        replyTo: email, // camelCase for your current Resend SDK
-        subject,
-        html,
-        text,
+    // 1) Send the inquiry to you
+    const adminSend = await resend.emails.send({
+      from: FROM,
+      to: TO,
+      replyTo: email, // correct casing for your installed Resend SDK
+      subject,
+      html,
+      text,
+    });
+
+    if (adminSend.error) {
+      return new Response(JSON.stringify({ ok: false, error: String(adminSend.error) }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
       });
-      if (error) {
-        return new Response(JSON.stringify({ ok: false, error: String(error) }), {
-          status: 500,
-          headers: { "content-type": "application/json" },
-        });
-      }
     }
 
-    // 2) Auto-reply to the sender (keeps your existing behavior)
-    {
-      const autoHtml = `
-        <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
-          <h2>Thanks, ${safeName} — we got your message ✅</h2>
-          <p>We typically respond within 24 hours.</p>
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
-          <p><strong>Your message:</strong></p>
-          <pre style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">${safeMessage}</pre>
-          <p style="color:#6b7280;font-size:12px;margin-top:16px">If you didn’t submit this, you can ignore this email.</p>
-        </div>
-      `;
-      const autoText = `Thanks, ${name} — we got your message. We typically respond within 24 hours.
+    // 2) Auto-reply to the sender (kept from your working version)
+    const autoReplySubject = "Thanks! We’ve got your info — QuickSetupAI";
+    const autoReplyHtml = `
+      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
+        <h2>Thanks, ${safeName}!</h2>
+        <p>We’ve received your message and will review your business and send a free AI Blueprint within 24 hours.</p>
+        <p>Want to talk sooner? You can book a call here:</p>
+        <p><a href="https://calendly.com/morgan-harris92/30min">Book a quick setup call</a></p>
+        <hr />
+        <p style="color:#64748b;font-size:12px;">Sent by QuickSetupAI · quicksetupai.com</p>
+      </div>
+    `;
+    const autoReplyText =
+      `Thanks, ${name}!\n\n` +
+      `We’ve received your message and will review your business and send a free AI Blueprint within 24 hours.\n\n` +
+      `Book a quick setup call: https://calendly.com/morgan-harris92/30min\n`;
 
-Your message:
-${message}
-`;
+    const userSend = await resend.emails.send({
+      from: FROM,
+      to: email,
+      subject: autoReplySubject,
+      html: autoReplyHtml,
+      text: autoReplyText,
+    });
 
-      const { error: autoErr } = await resend.emails.send({
-        from: FROM,
-        to: email,
-        subject: "We received your message — QuickSetupAI",
-        html: autoHtml,
-        text: autoText,
-      });
-      // Note: even if auto-reply fails, we don't block the main success path.
-      if (autoErr) {
-        console.warn("Auto-reply failed:", autoErr);
-      }
+    if (userSend.error) {
+      console.warn("Auto-reply failed:", userSend.error);
     }
 
     return new Response(JSON.stringify({ ok: true }), {
