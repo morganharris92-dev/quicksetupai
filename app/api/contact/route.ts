@@ -1,64 +1,86 @@
 // app/api/contact/route.ts
+import { NextRequest } from "next/server";
 import { Resend } from "resend";
 
-export const runtime = "edge"; // runs great on Cloudflare/Next-on-Pages
+export const runtime = "edge"; // great on Cloudflare/Next-on-Pages
+
+// Where YOU receive messages:
+const TO = "contactquicksetupai@gmail.com";
+
+// The visible "From" line on the email your inbox receives.
+// This must be on a domain verified in Resend DNS, but it doesn't need a real mailbox.
+const FROM = "QuickSetupAI <no-reply@quicksetupai.com>";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// If you verify a sender in Resend later, set RESEND_FROM in Cloudflare.
-// Until then, Resend’s sandbox sender works for testing:
-const FROM = process.env.RESEND_FROM || "onboarding@resend.dev";
-
-// Where you want to receive the messages:
-const TO = "contactquicksetupai@gmail.com";
-
-function isEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+function sanitize(s: string) {
+  return s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export async function POST(req: Request) {
-  // Support both standard form POSTs and JSON fetches
-  let name = "";
-  let email = "";
-  let message = "";
-  let honeypot = "";
+export async function POST(req: NextRequest) {
+  try {
+    const contentType = req.headers.get("content-type") || "";
+    let name = "";
+    let email = "";
+    let message = "";
 
-  const ctype = req.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      name = (body.name || "").toString();
+      email = (body.email || "").toString();
+      message = (body.message || "").toString();
+    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+      const form = await req.formData();
+      name = (form.get("name") || "").toString();
+      email = (form.get("email") || "").toString();
+      message = (form.get("message") || "").toString();
+    } else if (contentType.includes("text/plain")) {
+      const text = await req.text();
+      // naive parse of key=value lines
+      for (const line of text.split("\n")) {
+        const [k, ...rest] = line.split(":");
+        const v = rest.join(":").trim();
+        if (k?.toLowerCase() === "name") name = v;
+        if (k?.toLowerCase() === "email") email = v;
+        if (k?.toLowerCase() === "message") message = v;
+      }
+    } else {
+      return new Response(JSON.stringify({ ok: false, error: "Unsupported Content-Type" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
 
-  if (ctype.includes("application/json")) {
-    const body = await req.json().catch(() => ({}));
-    name = (body.name || "").toString().trim();
-    email = (body.email || "").toString().trim();
-    message = (body.message || "").toString().trim();
-    honeypot = (body.company || "").toString().trim();
-  } else {
-    const form = await req.formData();
-    name = String(form.get("name") || "").trim();
-    email = String(form.get("email") || "").trim();
-    message = String(form.get("message") || "").trim();
-    // honeypot (hidden field). Bots will often fill it.
-    honeypot = String(form.get("company") || "").trim();
-  }
+    if (!name || !email || !message) {
+      return new Response(JSON.stringify({ ok: false, error: "Missing name, email, or message" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
 
-  // Silently accept bots that fill the honeypot
-  if (honeypot) return new Response(null, { status: 204 });
+    // basic email sanity
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ ok: false, error: "Invalid email" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
 
-  // Basic validation
-  if (!name || !email || !message || !isEmail(email)) {
-    return Response.json({ ok: false, error: "Invalid form data." }, { status: 400 });
-  }
+    const subject = `New QuickSetupAI inquiry from ${name}`;
+    const safeName = sanitize(name);
+    const safeEmail = sanitize(email);
+    const safeMessage = sanitize(message);
 
-  // Compose email
-  const subject = `New QuickSetupAI contact from ${name}`;
-  const html = `
-    <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height:1.6;">
-      <h2>New contact submission</h2>
-      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-      <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-      <p><strong>Message:</strong><br/>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>
-    </div>
-  `;
-  const text = `New contact submission
+    const html = `
+      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;">
+        <h2>New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${safeName}</p>
+        <p><strong>Email:</strong> ${safeEmail}</p>
+        <p><strong>Message:</strong></p>
+        <pre style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">${safeMessage}</pre>
+      </div>
+    `;
+    const text = `New Contact Form Submission
 
 Name: ${name}
 Email: ${email}
@@ -67,36 +89,31 @@ Message:
 ${message}
 `;
 
-  try {
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: FROM,
       to: TO,
-      replyTo: email, // reply in your inbox goes back to the sender
+      // IMPORTANT: snake_case is required by Resend types
+      reply_to: email,
       subject,
       html,
-      text,
+      text
     });
 
-    // If the browser posted a regular form, redirect to thanks page
-    if (!ctype.includes("application/json")) {
-      return Response.redirect(new URL("/thanks", req.url), 303);
+    if (error) {
+      return new Response(JSON.stringify({ ok: false, error: String(error) }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      });
     }
-    return Response.json({ ok: true });
-  } catch (err: any) {
-    console.error("Resend error:", err);
-    return Response.json(
-      { ok: false, error: err?.message || "Failed to send email" },
-      { status: 500 }
-    );
-  }
-}
 
-// Simple HTML escape to avoid any odd characters breaking markup
-function escapeHtml(s: string) {
-  return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ ok: false, error: err?.message || "Unknown error" }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
 }
