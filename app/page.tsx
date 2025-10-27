@@ -1,7 +1,7 @@
 // app/page.tsx
 import CTAButton from "@/components/CTAButton";
 import Section from "@/components/Section";
-import ContactForm from "@/components/ContactForm"; // uses fetch to /api/contact and shows success banner
+import ContactForm from "@/components/ContactForm"; // handles submit + success banner
 
 export default function Home() {
   return (
@@ -130,15 +130,12 @@ export default function Home() {
             <p className="mt-3 text-sm text-slate-600">Prefer email? contactquicksetupai@gmail.com</p>
           </div>
 
-          {/* Replaces the raw HTML form to prevent navigating to the JSON page.
-              Visual layout and spacing remain the same. */}
+          {/* Contact form with inline success message */}
           <div className="rounded-2xl bg-white p-6 border border-slate-200">
             <h3 className="font-semibold text-lg">Quick Contact</h3>
             <p className="text-sm text-slate-700">Tell us your goal and we’ll reply with a quick plan.</p>
             <ContactForm />
-            <p className="text-xs text-slate-500 mt-3">
-              We’ll never share your info. Replies usually within 1 business day.
-            </p>
+            {/* Removed duplicate disclaimer here (ContactForm already includes it). */}
           </div>
         </div>
       </Section>
