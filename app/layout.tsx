@@ -54,20 +54,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        {/* ✅ Google Analytics Tag */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-T4LNV0TFLQ"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-T4LNV0TFLQ');
-            `,
-          }}
-        />
-      </head>
       <body className="bg-gray-50 text-gray-900">
         <Header />
         <main className="min-h-screen">{children}</main>
